@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nelbisnails - Calculadora de Precios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        beige: {
+                            50: '#fdfbf7',
+                            100: '#f8f4eb',
+                            200: '#efe6d5',
+                            300: '#e5d3b8',
+                            400: '#d7bc95',
+                        },
+                        gray: {
+                            800: '#2d3748',
+                            900: '#1a202c',
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'serif'],
+                        sans: ['"Inter"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Ocultar flechas de inputs numéricos */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        .service-radio:checked + label {
+            border-color: #000;
+            background-color: #000;
+            color: #fff;
+        }
+        .service-radio:checked + label .service-desc {
+            color: #d1d5db; /* text-gray-300 */
+        }
+        /* Transiciones suaves */
+        .transition-all {
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 300ms;
+        }
+    </style>
+</head>
+<body class="bg-beige-50 text-gray-900 font-sans min-h-screen pb-12">
+
+    <!-- Header -->
+    <header class="bg-black text-white py-8 text-center shadow-md">
+        <h1 class="text-4xl md:text-5xl font-serif tracking-wide">Nelbisnails</h1>
+        <p class="mt-2 text-beige-200 font-light tracking-widest text-sm uppercase">Calculadora de Servicios</p>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+        <div class="flex flex-col lg:flex-row gap-8">
+            
+            <!-- Controles (Izquierda) -->
+            <div class="flex-1 space-y-10">
+                
+                <!-- Sección: Sistemas Base -->
+                <section class="bg-white p-6 rounded-2xl shadow-sm border border-beige-200">
+                    <h2 class="text-2xl font-serif mb-6 border-b border-beige-200 pb-2">1. Elige tu Sistema Base</h2>
+                    <div class="space-y-4" id="base-services-container">
+                        <!-- Generado por JS -->
+                    </div>
+                </section>
+
+                <!-- Sección: Decoraciones Extras -->
+                <section class="bg-white p-6 rounded-2xl shadow-sm border border-beige-200">
+                    <div class="mb-6 border-b border-beige-200 pb-2">
+                        <h2 class="text-2xl font-serif">2. Agrega Decoraciones</h2>
+                        <p class="text-sm text-gray-500 mt-1">Selecciona la cantidad de uñas por diseño (Máx 10).</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="decorations-container">
+                        <!-- Generado por JS -->
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- Resumen (Derecha - Sticky) -->
+            <div class="lg:w-1/3">
+                <div class="bg-white p-6 rounded-2xl shadow-lg border border-beige-300 sticky top-10">
+                    <h2 class="text-2xl font-serif mb-6 text-center border-b border-beige-200 pb-4">Resumen de tu Cita</h2>
+                    
+                    <div class="space-y-4 text-sm" id="summary-content">
+                        <!-- Sistema Base Seleccionado -->
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1 pr-4">
+                                <p class="font-medium" id="summary-base-name">-</p>
+                                <p class="text-gray-500 text-xs">Sistema base</p>
+                            </div>
+                            <span class="font-semibold" id="summary-base-price">$0</span>
+                        </div>
+
+                        <div id="summary-extras-container" class="space-y-2 border-t border-dashed border-gray-300 pt-4 mt-4">
+                            <!-- Extras seleccionados aparecerán aquí -->
+                        </div>
+                    </div>
+
+                    <div class="border-t border-black mt-6 pt-6">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xl font-serif font-bold">Total Estimado</span>
+                            <span class="text-2xl font-semibold" id="summary-total">$0</span>
+                        </div>
+                        <p class="text-xs text-gray-400 text-right mt-1">*Precio sujeto a evaluación en el salón</p>
+                    </div>
+
+                    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="w-full mt-8 bg-black text-white py-3 rounded-lg font-medium tracking-wide hover:bg-gray-800 transition-colors uppercase text-sm">
+                        Comenzar de nuevo
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Formateador de moneda
+        const formatter = new Intl.NumberFormat('es-AR', {
+            style: 'currency',
+            currency: 'ARS',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        });
+
+        // Datos
+        const baseServices = [
+            { id: 'presson', name: 'PRESS ON NAILS + KIT DE APLICACIÓN DISEÑO LISO', price: 7000 },
+            { id: 'semi', name: 'SEMIPERMANENTE DISEÑO LISO', price: 10000 },
+            { id: 'kapping', name: 'KAPPING DISEÑO LISO', price: 11000 },
+            { id: 'softgel', name: 'SOFT GEL DISEÑO LISO', price: 13000 }
+        ];
+
+        const decorations = [
+            { id: 'polvo', name: 'Polvo cromado/aurora/perlado/holográfico', price: 200, qty: 0 },
+            { id: 'babyboomer', name: 'Babyboomer', price: 450, qty: 0 },
+            { id: 'aura', name: 'Aura', price: 450, qty: 0 },
+            { id: 'french', name: 'French', price: 450, qty: 0 },
+            { id: 'nailart', name: 'Nail art', price: 300, qty: 0 },
+            { id: 'strass', name: 'Strass', price: 250, qty: 0 },
+            { id: 'cateye', name: 'Cat eye', price: 100, qty: 0 },
+            { id: 'cateyecorazon', name: 'Cat eye corazón', price: 150, qty: 0 },
+            { id: 'blooming', name: 'Blooming', price: 150, qty: 0 },
+            { id: 'relieve', name: 'Relieve', price: 450, qty: 0 }
+        ];
+
+        // Estado inicial
+        let state = {
+            selectedBaseId: baseServices[0].id,
+            extras: [...decorations]
+        };
+
+        // Elementos del DOM
+        const baseContainer = document.getElementById('base-services-container');
+        const decContainer = document.getElementById('decorations-container');
+        const sumBaseName = document.getElementById('summary-base-name');
+        const sumBasePrice = document.getElementById('summary-base-price');
+        const sumExtrasContainer = document.getElementById('summary-extras-container');
+        const sumTotal = document.getElementById('summary-total');
+
+        // Inicializar la aplicación
+        function init() {
+            renderBaseServices();
+            renderDecorations();
+            updateSummary();
+        }
+
+        // Renderizar Sistemas Base
+        function renderBaseServices() {
+            baseContainer.innerHTML = '';
+            baseServices.forEach(service => {
+                const isChecked = state.selectedBaseId === service.id;
+                
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = `
+                    <input type="radio" name="base_service" id="${service.id}" value="${service.id}" 
+                           class="hidden service-radio" ${isChecked ? 'checked' : ''}>
+                    <label for="${service.id}" class="flex justify-between items-center p-4 rounded-xl border border-beige-300 cursor-pointer transition-all hover:border-black bg-beige-50">
+                        <div class="pr-4">
+                            <h3 class="font-medium text-sm md:text-base transition-colors">${service.name}</h3>
+                        </div>
+                        <div class="font-bold whitespace-nowrap">${formatter.format(service.price)}</div>
+                    </label>
+                `;
+                
+                // Event listener para cambio
+                const input = wrapper.querySelector('input');
+                input.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        state.selectedBaseId = e.target.value;
+                        updateSummary();
+                    }
+                });
+
+                baseContainer.appendChild(wrapper);
+            });
+        }
+
+        // Renderizar Decoraciones
+        function renderDecorations() {
+            decContainer.innerHTML = '';
+            state.extras.forEach((dec, index) => {
+                const item = document.createElement('div');
+                item.className = "flex flex-col justify-between p-4 border border-beige-200 rounded-xl bg-beige-50/50";
+                
+                item.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="font-medium text-sm pr-2">${dec.name}</span>
+                        <span class="text-sm font-semibold whitespace-nowrap">${formatter.format(dec.price)} <span class="text-xs text-gray-500 font-normal">c/u</span></span>
+                    </div>
+                    <div class="flex items-center justify-between mt-auto bg-white p-1 rounded-lg border border-beige-200">
+                        <button class="w-8 h-8 rounded bg-beige-100 text-gray-600 hover:bg-beige-200 hover:text-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                                onclick="updateDecorationQty(${index}, -1)" ${dec.qty <= 0 ? 'disabled' : ''}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
+                        <input type="number" min="0" max="10" value="${dec.qty}" 
+                               class="w-12 text-center font-medium bg-transparent border-none focus:outline-none focus:ring-0" 
+                               onchange="setDecorationQty(${index}, this.value)">
+                        <button class="w-8 h-8 rounded bg-black text-white hover:bg-gray-800 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                                onclick="updateDecorationQty(${index}, 1)" ${dec.qty >= 10 ? 'disabled' : ''}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
+                    </div>
+                `;
+                decContainer.appendChild(item);
+            });
+        }
+
+        // Acciones para actualizar cantidades
+        window.updateDecorationQty = function(index, delta) {
+            let newQty = state.extras[index].qty + delta;
+            setDecorationQty(index, newQty);
+        }
+
+        window.setDecorationQty = function(index, value) {
+            let val = parseInt(value);
+            if (isNaN(val)) val = 0;
+            if (val < 0) val = 0;
+            if (val > 10) val = 10;
+            
+            state.extras[index].qty = val;
+            renderDecorations(); // Re-render to update buttons disabled state and inputs
+            updateSummary();
+        }
+
+        // Actualizar el Resumen y Total
+        function updateSummary() {
+            // Base
+            const baseSelected = baseServices.find(s => s.id === state.selectedBaseId);
+            sumBaseName.textContent = baseSelected.name;
+            sumBasePrice.textContent = formatter.format(baseSelected.price);
+            
+            let total = baseSelected.price;
+
+            // Extras
+            sumExtrasContainer.innerHTML = '';
+            const activeExtras = state.extras.filter(e => e.qty > 0);
+            
+            if (activeExtras.length === 0) {
+                sumExtrasContainer.innerHTML = '<p class="text-gray-400 text-xs italic">Sin decoraciones extra</p>';
+            } else {
+                activeExtras.forEach(ext => {
+                    const extraTotal = ext.qty * ext.price;
+                    total += extraTotal;
+                    
+                    const div = document.createElement('div');
+                    div.className = "flex justify-between items-start text-sm";
+                    div.innerHTML = `
+                        <div class="pr-4">
+                            <span class="text-gray-800">${ext.qty}x ${ext.name}</span>
+                            <span class="text-xs text-gray-500 block">(${formatter.format(ext.price)} c/u)</span>
+                        </div>
+                        <span class="font-medium">${formatter.format(extraTotal)}</span>
+                    `;
+                    sumExtrasContainer.appendChild(div);
+                });
+            }
+
+            // Animar el total si cambió (pequeño efecto)
+            sumTotal.style.transform = 'scale(1.1)';
+            sumTotal.style.color = '#4b5563'; // gray-600
+            setTimeout(() => {
+                sumTotal.style.transform = 'scale(1)';
+                sumTotal.style.color = '#000';
+            }, 150);
+            sumTotal.style.transition = 'all 0.2s ease-out';
+            
+            sumTotal.textContent = formatter.format(total);
+        }
+
+        // Ejecutar inicio
+        init();
+    </script>
+</body>
+</html>
